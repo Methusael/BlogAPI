@@ -12,8 +12,14 @@ namespace BlogBackend.Domain.Interfaces
 
         Task<Guid> AddAsync(T entity, CancellationToken cancellationToken);
 
-        Task UpdateAsync(T entity, CancellationToken cancellationToken);
+        void Update(T entity);
 
-        Task DeleteAsync(T entity, CancellationToken cancellationToken);
+        void Delete(T entity);
+
+        void DeleteById(Guid id);
+
+        void SaveChanges();
+
+        Task SaveChangesAsync(CancellationToken cancellationToken);
     }
 }

@@ -11,9 +11,16 @@ namespace BlogBackend.Infrastructure.Data
         }
 
         // DbSet properties representing tables in the database
-        public DbSet<Post> Posts { get; set; }
-
         public DbSet<User> Users { get; set; }
-        // Add other DbSet properties for additional entities
+
+        public DbSet<Topic> Posts { get; set; }
+
+        public DbSet<PostHistory> PostHistories { get; set; }
+
+        public DbSet<Topic> Topics { get; set; }
+
+        public DbSet<TopicHistory> TopicHistories{ get; set; }
+
+        public DbSet<Comment> Comments { get; set; }
     }
 }

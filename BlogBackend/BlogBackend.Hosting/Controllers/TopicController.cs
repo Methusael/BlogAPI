@@ -2,29 +2,29 @@
 using BlogBackend.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BlogBackend.Hosting.Controllers
+namespace BlogBackend.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PostController : ControllerBase
+    public class TopicController : ControllerBase
     {
-        private readonly IPostService _postService;
-        private readonly ILogger<PostController> _logger;
+        private readonly ITopicService _topicService;
+        private readonly ILogger<TopicController> _logger;
 
-        public PostController(IPostService postService, ILogger<PostController> logger)
+        public TopicController(ITopicService postService, ILogger<TopicController> logger)
         {
-            _postService = postService;
+            _topicService = postService;
             _logger = logger;
         }
 
         [HttpPost("Create")]
-        public async Task<IActionResult> CreateAsync([FromBody] PostDTO postDto, CancellationToken cancellationToken)
+        public async Task<IActionResult> CreateAsync([FromBody] TopicDTO topicDto, CancellationToken cancellationToken)
         {
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var posts = await _postService.AddAsync(postDto, cancellationToken);
-                return Ok(posts);
+                var topicId = await _topicService.AddAsync(topicDto, cancellationToken);
+                return Ok(topicId);
             }
             catch (OperationCanceledException)
             {
@@ -42,8 +42,8 @@ namespace BlogBackend.Hosting.Controllers
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var posts = await _postService.GetAllAsync(cancellationToken);
-                return Ok(posts);
+                var topics = await _topicService.GetAllAsync(cancellationToken);
+                return Ok(topics);
             }
             catch (OperationCanceledException)
             {
@@ -56,12 +56,12 @@ namespace BlogBackend.Hosting.Controllers
         }
 
         [HttpPut("Edit")]
-        public async Task<IActionResult> Edit([FromBody] PostDTO postDto, CancellationToken cancellationToken)
+        public async Task<IActionResult> Edit([FromBody] TopicDTO topicDto, CancellationToken cancellationToken)
         {
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                await _postService.UpdateAsync(postDto, cancellationToken);
+                await _topicService.UpdateAsync(topicDto, cancellationToken);
                 return Ok();
             }
             catch (OperationCanceledException)
@@ -75,12 +75,12 @@ namespace BlogBackend.Hosting.Controllers
         }
 
         [HttpDelete("Delete")]
-        public async Task<IActionResult> Delete([FromBody] PostDTO postDto, CancellationToken cancellationToken)
+        public async Task<IActionResult> Delete([FromBody] TopicDTO postDto, CancellationToken cancellationToken)
         {
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                await _postService.UpdateAsync(postDto, cancellationToken);
+                await _topicService.UpdateAsync(postDto, cancellationToken);
                 return Ok();
             }
             catch (OperationCanceledException)

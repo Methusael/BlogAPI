@@ -16,18 +16,13 @@ namespace BlogBackend.Application.Services
         public async Task<IReadOnlyList<PostDTO>> GetAllAsync(CancellationToken cancellationToken)
         {
             var posts = await _repository.GetAllAsync(cancellationToken);
-            List<PostDTO> list = new List<PostDTO>();
-            foreach (var post in posts)
-            {
-                list.Add(post);
-            }
-
-            return list;
+            return posts.Select(post => new PostDTO(post.Id, post.Title, post.Content, post.TopicId)).ToList();
         }
 
-        public Task<IReadOnlyList<PostDTO>> GetByIdsAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<PostDTO>> GetByIdsAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            var posts = await _repository.GetByIdsAsync(ids, cancellationToken);
+            return posts.Select(post => new PostDTO(post.Id, post.Title, post.Content, post.TopicId)).ToList();
         }
 
         public async Task<PostDTO> GetByIdAsync(Guid postId, CancellationToken cancellationToken)
@@ -37,18 +32,23 @@ namespace BlogBackend.Application.Services
 
         public async Task<Guid> AddAsync(PostDTO postDTO, CancellationToken cancellationToken)
         {
-            return await _repository.AddAsync(postDTO, cancellationToken);
+            var postToBeAdded = new Post(postDTO.Id, postDTO.Title, postDTO.Content, postDTO.TopicId);
+
+            return await _repository.AddAsync(postToBeAdded, cancellationToken);
         }
 
-        public async Task UpdateAsync(PostDTO postDTO, CancellationToken cancellationToken)
+        public async Task UpdateAsync(PostDTO topicDto, CancellationToken cancellationToken)
         {
-            await _repository.UpdateAsync(postDTO,cancellationToken);
+            var postToBeModified = await _repository.GetByIdAsync(topicDto.Id, cancellationToken);
+            postToBeModified.Title = topicDto.Title;
+
+            _repository.Update(postToBeModified);
         }
 
         public async Task DeleteByIdAsync(Guid postId, CancellationToken cancellationToken)
         {
             var postToBeDeleted = await _repository.GetByIdAsync(postId, cancellationToken);
-            await _repository.DeleteAsync(postToBeDeleted, cancellationToken);
+            _repository.Delete(postToBeDeleted);
         }
     }
 }

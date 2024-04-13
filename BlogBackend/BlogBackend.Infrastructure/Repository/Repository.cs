@@ -35,21 +35,34 @@ namespace BlogBackend.Infrastructure.Repository
         public async Task<Guid> AddAsync(T entity, CancellationToken cancellationToken)
         {
             await _targetDbSet.AddAsync(entity, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-
             return entity.Id;
         }
 
-        public async Task UpdateAsync(T entity,CancellationToken cancellationToken)
+        public void Update(T entity)
         {
             _dbContext.Entry(entity).State = EntityState.Modified;
-            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task DeleteAsync(T entity, CancellationToken cancellationToken)
+        public void Delete(T entity)
         {
             _targetDbSet.Remove(entity);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        public void DeleteById(Guid id)
+        {
+            var itemToDelete = _targetDbSet.Find(id) ?? throw new ItemNotFoundException();
+
+            _targetDbSet.Remove(itemToDelete);
+        }
+
+        public void SaveChanges()
+        {
+            _dbContext.SaveChanges();
+        }
+
+        public async Task SaveChangesAsync(CancellationToken cancellationToken)
+        {
+            await _dbContext.SaveChangesAsync();
         }
     }
 }
