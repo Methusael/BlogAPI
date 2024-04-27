@@ -10,17 +10,23 @@ namespace BlogBackend.Infrastructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Topics",
+                name: "Topic",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TopicId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Topics", x => x.Id);
+                    table.PrimaryKey("PK_Topic", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Topic_Topic_TopicId",
+                        column: x => x.TopicId,
+                        principalTable: "Topic",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -28,10 +34,13 @@ namespace BlogBackend.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Role = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RefreshTokenExpiry = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -39,49 +48,28 @@ namespace BlogBackend.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Posts",
+                name: "Post",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    TopicId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Posts", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Posts_Topics_TopicId",
-                        column: x => x.TopicId,
-                        principalTable: "Topics",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TopicHistories",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     TopicId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Action = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    When = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    PostId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TopicHistories", x => x.Id);
+                    table.PrimaryKey("PK_Post", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TopicHistories_Topics_TopicId",
+                        name: "FK_Post_Post_PostId",
+                        column: x => x.PostId,
+                        principalTable: "Post",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Post_Topic_TopicId",
                         column: x => x.TopicId,
-                        principalTable: "Topics",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TopicHistories_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
+                        principalTable: "Topic",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -99,13 +87,46 @@ namespace BlogBackend.Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_Comments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Comments_Posts_PostId",
+                        name: "FK_Comments_Topic_PostId",
                         column: x => x.PostId,
-                        principalTable: "Posts",
+                        principalTable: "Topic",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Comments_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TopicHistories",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TopicId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TopicHistoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Action = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    When = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TopicHistories", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TopicHistories_Topic_TopicId",
+                        column: x => x.TopicId,
+                        principalTable: "Topic",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TopicHistories_TopicHistories_TopicHistoryId",
+                        column: x => x.TopicHistoryId,
+                        principalTable: "TopicHistories",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_TopicHistories_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -118,6 +139,7 @@ namespace BlogBackend.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     PostId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PostHistoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Action = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     When = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -126,11 +148,16 @@ namespace BlogBackend.Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_PostHistories", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PostHistories_Posts_PostId",
+                        name: "FK_PostHistories_Post_PostId",
                         column: x => x.PostId,
-                        principalTable: "Posts",
+                        principalTable: "Post",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PostHistories_PostHistories_PostHistoryId",
+                        column: x => x.PostHistoryId,
+                        principalTable: "PostHistories",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_PostHistories_Users_UserId",
                         column: x => x.UserId,
@@ -150,6 +177,21 @@ namespace BlogBackend.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Post_PostId",
+                table: "Post",
+                column: "PostId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Post_TopicId",
+                table: "Post",
+                column: "TopicId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PostHistories_PostHistoryId",
+                table: "PostHistories",
+                column: "PostHistoryId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PostHistories_PostId",
                 table: "PostHistories",
                 column: "PostId");
@@ -160,9 +202,14 @@ namespace BlogBackend.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Posts_TopicId",
-                table: "Posts",
+                name: "IX_Topic_TopicId",
+                table: "Topic",
                 column: "TopicId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TopicHistories_TopicHistoryId",
+                table: "TopicHistories",
+                column: "TopicHistoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TopicHistories_TopicId",
@@ -187,13 +234,13 @@ namespace BlogBackend.Infrastructure.Migrations
                 name: "TopicHistories");
 
             migrationBuilder.DropTable(
-                name: "Posts");
+                name: "Post");
 
             migrationBuilder.DropTable(
                 name: "Users");
 
             migrationBuilder.DropTable(
-                name: "Topics");
+                name: "Topic");
         }
     }
 }

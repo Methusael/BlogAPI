@@ -3,11 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BlogBackend.Domain.Models
 {
-    public class BaseHistory
+    public class BaseHistory : BaseEntity
     {
-        [Key]
-        public Guid Id { get; set; }
-
         [ForeignKey(nameof(UserId))]
         public Guid UserId { get; set; }
 

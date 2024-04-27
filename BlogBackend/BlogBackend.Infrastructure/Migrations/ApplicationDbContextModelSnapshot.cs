@@ -60,6 +60,9 @@ namespace BlogBackend.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("PostId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -69,9 +72,11 @@ namespace BlogBackend.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PostId");
+
                     b.HasIndex("TopicId");
 
-                    b.ToTable("Posts");
+                    b.ToTable("Post");
                 });
 
             modelBuilder.Entity("BlogBackend.Domain.Models.PostHistory", b =>
@@ -84,6 +89,9 @@ namespace BlogBackend.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("PostHistoryId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("PostId")
                         .HasColumnType("uniqueidentifier");
 
@@ -94,6 +102,8 @@ namespace BlogBackend.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PostHistoryId");
 
                     b.HasIndex("PostId");
 
@@ -119,9 +129,14 @@ namespace BlogBackend.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("TopicId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
-                    b.ToTable("Topics");
+                    b.HasIndex("TopicId");
+
+                    b.ToTable("Topic");
                 });
 
             modelBuilder.Entity("BlogBackend.Domain.Models.TopicHistory", b =>
@@ -134,6 +149,9 @@ namespace BlogBackend.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("TopicHistoryId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("TopicId")
                         .HasColumnType("uniqueidentifier");
 
@@ -144,6 +162,8 @@ namespace BlogBackend.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TopicHistoryId");
 
                     b.HasIndex("TopicId");
 
@@ -166,8 +186,17 @@ namespace BlogBackend.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RefreshTokenExpiry")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("Role")
                         .HasColumnType("int");
@@ -179,8 +208,8 @@ namespace BlogBackend.Infrastructure.Migrations
 
             modelBuilder.Entity("BlogBackend.Domain.Models.Comment", b =>
                 {
-                    b.HasOne("BlogBackend.Domain.Models.Post", "Post")
-                        .WithMany("Comments")
+                    b.HasOne("BlogBackend.Domain.Models.Topic", "Post")
+                        .WithMany()
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -198,8 +227,12 @@ namespace BlogBackend.Infrastructure.Migrations
 
             modelBuilder.Entity("BlogBackend.Domain.Models.Post", b =>
                 {
-                    b.HasOne("BlogBackend.Domain.Models.Topic", "Topic")
+                    b.HasOne("BlogBackend.Domain.Models.Post", null)
                         .WithMany("Posts")
+                        .HasForeignKey("PostId");
+
+                    b.HasOne("BlogBackend.Domain.Models.Topic", "Topic")
+                        .WithMany()
                         .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -209,14 +242,18 @@ namespace BlogBackend.Infrastructure.Migrations
 
             modelBuilder.Entity("BlogBackend.Domain.Models.PostHistory", b =>
                 {
-                    b.HasOne("BlogBackend.Domain.Models.Post", "Post")
+                    b.HasOne("BlogBackend.Domain.Models.PostHistory", null)
                         .WithMany("PostHistories")
+                        .HasForeignKey("PostHistoryId");
+
+                    b.HasOne("BlogBackend.Domain.Models.Post", "Post")
+                        .WithMany()
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("BlogBackend.Domain.Models.User", "User")
-                        .WithMany("PostHistories")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -226,16 +263,27 @@ namespace BlogBackend.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BlogBackend.Domain.Models.Topic", b =>
+                {
+                    b.HasOne("BlogBackend.Domain.Models.Topic", null)
+                        .WithMany("Posts")
+                        .HasForeignKey("TopicId");
+                });
+
             modelBuilder.Entity("BlogBackend.Domain.Models.TopicHistory", b =>
                 {
-                    b.HasOne("BlogBackend.Domain.Models.Topic", "Topic")
+                    b.HasOne("BlogBackend.Domain.Models.TopicHistory", null)
                         .WithMany("TopicHistories")
+                        .HasForeignKey("TopicHistoryId");
+
+                    b.HasOne("BlogBackend.Domain.Models.Topic", "Topic")
+                        .WithMany()
                         .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("BlogBackend.Domain.Models.User", "User")
-                        .WithMany("TopicHistories")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -247,25 +295,27 @@ namespace BlogBackend.Infrastructure.Migrations
 
             modelBuilder.Entity("BlogBackend.Domain.Models.Post", b =>
                 {
-                    b.Navigation("Comments");
+                    b.Navigation("Posts");
+                });
 
+            modelBuilder.Entity("BlogBackend.Domain.Models.PostHistory", b =>
+                {
                     b.Navigation("PostHistories");
                 });
 
             modelBuilder.Entity("BlogBackend.Domain.Models.Topic", b =>
                 {
                     b.Navigation("Posts");
+                });
 
+            modelBuilder.Entity("BlogBackend.Domain.Models.TopicHistory", b =>
+                {
                     b.Navigation("TopicHistories");
                 });
 
             modelBuilder.Entity("BlogBackend.Domain.Models.User", b =>
                 {
                     b.Navigation("Comments");
-
-                    b.Navigation("PostHistories");
-
-                    b.Navigation("TopicHistories");
                 });
 #pragma warning restore 612, 618
         }

@@ -20,9 +20,12 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
 
 builder.Services.AddScoped<IRepository<Topic>, Repository<Topic>>();
 builder.Services.AddScoped<IRepository<Post>, Repository<Post>>();
+builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 
 builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 
 var app = builder.Build();
@@ -33,13 +36,10 @@ if (builder.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Other middleware and configurations
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-// Your application routes and endpoints
-// Routing = URL + HTTP Method
-app.UseRouting(); // Enable routing
+app.UseRouting();
 
 app.UseAuthentication();
 

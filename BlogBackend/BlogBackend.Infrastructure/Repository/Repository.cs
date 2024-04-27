@@ -29,7 +29,7 @@ namespace BlogBackend.Infrastructure.Repository
 
         public async Task<T> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            return await _targetDbSet.FindAsync(id, cancellationToken) ?? throw new ItemNotFoundException();
+            return await _targetDbSet.FindAsync(id) ?? throw new ItemNotFoundException();
         }
 
         public async Task<Guid> AddAsync(T entity, CancellationToken cancellationToken)

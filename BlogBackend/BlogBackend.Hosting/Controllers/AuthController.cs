@@ -1,6 +1,7 @@
 ﻿using BlogBackend.Application.DTOs.Requests;
 using BlogBackend.Application.DTOs.Responses;
 using BlogBackend.Application.Services;
+using BlogBackend.Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -15,13 +16,15 @@ namespace BlogBackend.WebApi.Controllers
     [Route("[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly IAccountService _accountService;
+        private readonly IAuthService _authService;
+        private readonly IUserService _userService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IAccountService accountService, IConfiguration configuration, ILogger<AuthController> logger)
+        public AuthController(IAuthService accountService,IUserService userService, IConfiguration configuration, ILogger<AuthController> logger)
         {
-            _accountService = accountService;
+            _authService = accountService;
+            _userService = userService;
             _configuration = configuration;
             _logger = logger;
         }
@@ -34,14 +37,19 @@ namespace BlogBackend.WebApi.Controllers
         {
             _logger.LogInformation("Register called");
 
-            var existingUser = await _accountService.FindByUsernameAsync(model.Username, cancellationToken);
-
-            if (existingUser != null)
-                return Conflict("User already exists.");
+            try
+            {
+                var existingUser = await _userService.FindByEmailAsync(model.Email, cancellationToken);
+                if (existingUser != null)
+                    return Conflict("User already exists.");
+            }
+            catch (ItemNotFoundException)
+            {
+            }            
 
             try
             {
-                var result = await _accountService.RegisterAsync(model.Username, model.Password, cancellationToken);
+                var result = await _authService.RegisterAsync(model, cancellationToken);
                 _logger.LogInformation("Register succeeded");
                 return Ok("User successfully created");
             }
@@ -49,97 +57,117 @@ namespace BlogBackend.WebApi.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Failed to create user");
             }
-
         }
 
         [HttpPost("Login")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginResponse))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Login([FromBody] LoginRequest model, CancellationToken cancellationToken)
+        public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Login called");
+            //TODO: Move to Service 
+            //Response.Cookies.Append("testCookie", "Cookie content");
 
-            var user = await _accountService.FindByUsernameAsync(model.Username, cancellationToken);
-
-            if (user == null || !await _accountService.CheckPasswordAsync(user, model.Password))
-                return Unauthorized();
-
-            JwtSecurityToken token = GenerateJwt(model.Username);
-
-            var refreshToken = GenerateRefreshToken();
-
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiry = DateTime.UtcNow.AddMinutes(1);
-
-            _accountService.Update(user);
-
-            _logger.LogInformation("Login succeeded");
-
-            return Ok(new LoginResponse
+            try
             {
-                JwtToken = new JwtSecurityTokenHandler().WriteToken(token),
-                Expiration = token.ValidTo,
-                RefreshToken = refreshToken
-            });
+                string jwt = await _authService.LoginAsync(loginRequest, cancellationToken);
+
+                Response.Cookies.Append("jwt", jwt, new CookieOptions
+                {
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.None,
+                    Secure = true,
+                    IsEssential = true,
+                    Domain = "localhost"
+                });
+                return Ok(new
+                {
+                    message = "success"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Invalid email or password");
+            }
         }
 
-        [HttpPost("Refresh")]
+        //[HttpPost("Refresh")]
+        //[ProducesResponseType(StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        //[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        //public async Task<IActionResult> Refresh([FromBody] RefreshRequest model)
+        //{
+        //    _logger.LogInformation("Refresh called");
+
+        //    var principal = GetPrincipalFromExpiredToken(model.AccessToken);
+
+        //    if (principal?.Identity?.Name is null)
+        //        return Unauthorized();
+
+        //    var user = await _userService.FindByEmailAsync(principal.Identity.Name, CancellationToken.None);
+
+        //    if (user is null || user.RefreshToken != model.RefreshToken || user.RefreshTokenExpiry < DateTime.UtcNow)
+        //        return Unauthorized();
+
+        //    var token = GenerateJwt(principal.Identity.Name);
+
+        //    _logger.LogInformation("Refresh succeeded");
+
+        //    return Ok(new LoginResponse
+        //    {
+        //        JwtToken = new JwtSecurityTokenHandler().WriteToken(token),
+        //        Expiration = token.ValidTo,
+        //        RefreshToken = model.RefreshToken
+        //    });
+        //}
+
+        //[Authorize]
+        //[HttpDelete("Revoke")]
+        //[ProducesResponseType(StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        //[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        //public async Task<IActionResult> Revoke()
+        //{
+        //    _logger.LogInformation("Revoke called");
+
+        //    var email = HttpContext.User.Identity?.Name;
+
+        //    if (email is null)
+        //        return Unauthorized();
+
+        //    var user = await _userService.FindByEmailAsync(email, CancellationToken.None);
+
+        //    if (user is null)
+        //        return Unauthorized();
+
+        //    user.RefreshToken = null;
+
+        //    _authService.Update(user);
+
+        //    _logger.LogInformation("Revoke succeeded");
+
+        //    return Ok();
+        //}
+
+        [HttpDelete("Logout")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Refresh([FromBody] RefreshRequest model)
+        public async Task<IActionResult> Logout()
         {
-            _logger.LogInformation("Refresh called");
-
-            var principal = GetPrincipalFromExpiredToken(model.AccessToken);
-
-            if (principal?.Identity?.Name is null)
-                return Unauthorized();
-
-            var user = await _accountService.FindByUsernameAsync(principal.Identity.Name, CancellationToken.None);
-
-            if (user is null || user.RefreshToken != model.RefreshToken || user.RefreshTokenExpiry < DateTime.UtcNow)
-                return Unauthorized();
-
-            var token = GenerateJwt(principal.Identity.Name);
-
-            _logger.LogInformation("Refresh succeeded");
-
-            return Ok(new LoginResponse
+            Response.Cookies.Delete("jwt", new CookieOptions
             {
-                JwtToken = new JwtSecurityTokenHandler().WriteToken(token),
-                Expiration = token.ValidTo,
-                RefreshToken = model.RefreshToken
+                HttpOnly = true,
+                SameSite = SameSiteMode.None,
+                Secure = true,
+                IsEssential = true,
+                Domain = "localhost"
             });
-        }
 
-        [Authorize]
-        [HttpDelete("Revoke")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Revoke()
-        {
-            _logger.LogInformation("Revoke called");
-
-            var username = HttpContext.User.Identity?.Name;
-
-            if (username is null)
-                return Unauthorized();
-
-            var user = await _accountService.FindByUsernameAsync(username, CancellationToken.None);
-
-            if (user is null)
-                return Unauthorized();
-
-            user.RefreshToken = null;
-
-            _accountService.Update(user);
-
-            _logger.LogInformation("Revoke succeeded");
-
-            return Ok();
+            return Ok(new
+            {
+                message = "successfully logged out"
+            });
         }
 
         private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
@@ -157,11 +185,11 @@ namespace BlogBackend.WebApi.Controllers
             return new JwtSecurityTokenHandler().ValidateToken(token, validation, out _);
         }
 
-        private JwtSecurityToken GenerateJwt(string username)
+        private JwtSecurityToken GenerateJwt(string email)
         {
             var authClaims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, username),
+                new Claim(ClaimTypes.Email, email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 

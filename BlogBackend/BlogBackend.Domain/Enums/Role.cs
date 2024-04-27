@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace BlogBackend.Domain.Enums
 {
+    [Serializable]
     public enum Role
     {
         User = 0,

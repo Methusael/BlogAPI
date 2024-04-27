@@ -5,11 +5,13 @@ namespace BlogBackend.Domain.Models
 {
     public class User : BaseEntity
     {
-        [Required]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [Required]
         public string Email { get; set; }
+
+        [Required]
+        public string Password{ get; set; }
 
         [Required]
         public Role Role { get; set; }
@@ -19,15 +21,15 @@ namespace BlogBackend.Domain.Models
 
         public ICollection<Comment> Comments { get; } = new List<Comment>();
 
-        public string RefreshToken { get; set; }
+        public string? RefreshToken { get; set; }
 
-        public DateTime RefreshTokenExpiry { get; set; }
+        public DateTime? RefreshTokenExpiry { get; set; }
 
-        public User(Guid id, string name, string email, Role role)
+        public User(Guid id, string email, string password, Role role)
         {
             Id = id;
-            Name = name;
             Email = email;
+            Password = password;
             Role = role;
         }
     }
