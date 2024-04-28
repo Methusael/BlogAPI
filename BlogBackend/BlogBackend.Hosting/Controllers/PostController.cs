@@ -75,6 +75,7 @@ namespace BlogBackend.Hosting.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("Create")]
         public async Task<IActionResult> CreateAsync([FromBody] PostDTO postDto, CancellationToken cancellationToken)
         {
@@ -94,6 +95,7 @@ namespace BlogBackend.Hosting.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("Edit")]
         public async Task<IActionResult> Edit([FromBody] PostDTO postDto, CancellationToken cancellationToken)
         {
@@ -113,6 +115,7 @@ namespace BlogBackend.Hosting.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("Delete")]
         public async Task<IActionResult> Delete([FromBody] Guid id, CancellationToken cancellationToken)
         {
@@ -132,7 +135,7 @@ namespace BlogBackend.Hosting.Controllers
             }
         }
 
-        [Authorize]
+        [Authorize(Roles = "Admin,User")]
         [HttpGet("Like")]
         public async Task<IActionResult> LikePostAsync(CancellationToken cancellationToken)
         {
@@ -152,6 +155,7 @@ namespace BlogBackend.Hosting.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin,User")]
         [HttpGet("CommentOnPost")]
         public async Task<IActionResult> CommentOnPostAsync(CancellationToken cancellationToken)
         {

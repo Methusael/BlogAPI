@@ -4,21 +4,24 @@ using BlogBackend.Domain.Enums;
 using BlogBackend.Domain.Exceptions;
 using BlogBackend.Domain.Interfaces;
 using BlogBackend.Domain.Models;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 
 namespace BlogBackend.Application.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly string secureKey = "valami nagyonszupereroscucclikey";
-
         private readonly IRepository<User> _userRepository;
 
-        public AuthService(IRepository<User> userRepository)
+        private readonly IConfiguration _configuration;
+
+        public AuthService(IRepository<User> userRepository, IConfiguration configuration)
         {
             _userRepository = userRepository;
+            _configuration = configuration;
         }
 
         public async Task<string> LoginAsync(LoginRequest loginRequest, CancellationToken cancellationToken)
@@ -36,7 +39,7 @@ namespace BlogBackend.Application.Services
                 throw new AccessViolationException("Bad password");
             }
 
-            string jwt = GenerateToken(user.Id);
+            string jwt = GenerateAccessToken(user);
 
             return jwt;
         }
@@ -64,44 +67,47 @@ namespace BlogBackend.Application.Services
 
             registerRequest.Password = BCrypt.Net.BCrypt.HashPassword(registerRequest.Password);
 
-            User user = new User(id, registerRequest.Email, registerRequest.Password, Role.User);
+            User user = new User(id, registerRequest.Email, registerRequest.Password, RoleType.User);
             await _userRepository.AddAsync(user, cancellationToken);
 
             UserDTO userDTO = new UserDTO();
             userDTO.Email = registerRequest.Email;
-            userDTO.Role = Role.User;
+            userDTO.Role = RoleType.User;
 
             _userRepository.SaveChanges();
 
             return userDTO;
         }
 
-
-        internal string GenerateToken(Guid id)
+        internal string GenerateAccessToken(User user)
         {
-            var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secureKey));
-            var credentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature);
-            var header = new JwtHeader(credentials);
+            List<Claim> claims = new List<Claim> {
+                new Claim(ClaimTypes.Name, user.Email),
+                new Claim(ClaimTypes.Role, user.Role.ToString())
+            };
 
-            var payload = new JwtPayload(id.ToString(), null, null, null, DateTime.Today.AddDays(1));
-            var securityToken = new JwtSecurityToken(header, payload);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                _configuration.GetSection("AppSettings:Token").Value));
 
-            return new JwtSecurityTokenHandler().WriteToken(securityToken);
-        }
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
-        internal JwtSecurityToken Verify(string jwt)
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(secureKey);
-            tokenHandler.ValidateToken(jwt, new TokenValidationParameters
+            var token = new JwtSecurityToken(
+                    claims: claims,
+                    expires: DateTime.Now.AddDays(1),
+                    signingCredentials: creds
+                );
+
+            string jwt = string.Empty;
+            try
             {
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuerSigningKey = true,
-                ValidateIssuer = false,
-                ValidateAudience = false
-            }, out SecurityToken validatedToken);
+                jwt = new JwtSecurityTokenHandler().WriteToken(token);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
 
-            return (JwtSecurityToken)validatedToken;
+            return jwt;
         }
     }
 }

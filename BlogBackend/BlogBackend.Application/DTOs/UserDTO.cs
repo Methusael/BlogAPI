@@ -7,6 +7,6 @@ namespace BlogBackend.Application.DTOs
     {
         public string Email { get; set; }
 
-        public Role Role { get; set; }
+        public RoleType Role { get; set; }
     }
 }

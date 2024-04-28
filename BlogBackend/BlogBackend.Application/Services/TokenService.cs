@@ -1,4 +1,6 @@
-﻿using BlogBackend.Domain.Models;
+﻿using BlogBackend.Domain.Enums;
+using BlogBackend.Domain.Models;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -9,20 +11,34 @@ namespace BlogBackend.Application.Services
 {
     public class TokenService
     {
-        public string GenerateAccessToken(User user, string secret)
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(secret);
+        private readonly IConfiguration _configuration;
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new[] { new Claim("id", user.Id.ToString()) }),
-                Expires = DateTime.UtcNow.AddMinutes(15), // Token expiration time
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        public TokenService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
+        public string GenerateAccessToken(User user, RoleType role)
+        {
+            List<Claim> claims = new List<Claim> {
+                new Claim(ClaimTypes.Name, user.Email),
+                new Claim(ClaimTypes.Role, role.ToString())
             };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                _configuration.GetSection("AppSettings:Token").Value));
+
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+            var token = new JwtSecurityToken(
+                    claims: claims,
+                    expires: DateTime.Now.AddDays(1),
+                    signingCredentials: creds
+                );
+
+            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return jwt;
         }
 
         public string GenerateRefreshToken()

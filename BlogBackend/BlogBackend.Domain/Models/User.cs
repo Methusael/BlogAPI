@@ -14,7 +14,7 @@ namespace BlogBackend.Domain.Models
         public string Password{ get; set; }
 
         [Required]
-        public Role Role { get; set; }
+        public RoleType Role { get; set; }
 
         [Required]
         public DateTime CreatedAt { get; set; }        
@@ -25,7 +25,7 @@ namespace BlogBackend.Domain.Models
 
         public DateTime? RefreshTokenExpiry { get; set; }
 
-        public User(Guid id, string email, string password, Role role)
+        public User(Guid id, string email, string password, RoleType role)
         {
             Id = id;
             Email = email;

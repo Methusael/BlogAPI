@@ -65,9 +65,6 @@ namespace BlogBackend.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest, CancellationToken cancellationToken)
         {
-            //TODO: Move to Service 
-            //Response.Cookies.Append("testCookie", "Cookie content");
-
             try
             {
                 string jwt = await _authService.LoginAsync(loginRequest, cancellationToken);
@@ -82,7 +79,7 @@ namespace BlogBackend.WebApi.Controllers
                 });
                 return Ok(new
                 {
-                    message = "success"
+                    token = jwt
                 });
             }
             catch (Exception ex)
