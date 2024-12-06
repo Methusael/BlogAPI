@@ -8,7 +8,7 @@ namespace BlogBackend.Domain.Models
         public string Email { get; set; }
         public string Password{ get; set; }
         public RoleType Role { get; set; }
-        public DateTime CreatedAt { get; set; }        
+        public DateTime CreatedDate { get; set; }        
 
         public ICollection<Topic> Topics { get; } = new List<Topic>();
         public ICollection<Post> Posts { get; } = new List<Post>();

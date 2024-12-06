@@ -13,7 +13,7 @@ namespace BlogBackend.Application.Features.Posts.Mappings
                 Title = dto.Title,
                 Content = dto.Content,
                 AuthorId = dto.AuthorId,
-                CreatedAt = DateTime.UtcNow
+                CreatedDate = DateTime.UtcNow
             };
         }
     }

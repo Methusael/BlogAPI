@@ -11,7 +11,7 @@ namespace BlogBackend.Application.Features.Comments.Mappings
             return new Comment
             {
                 Text = dto.Text,
-                CreateDate = DateTime.UtcNow,
+                CreatedDate = DateTime.UtcNow,
                 AuthorId = dto.UserId,
                 PostId = dto.PostId,
             };

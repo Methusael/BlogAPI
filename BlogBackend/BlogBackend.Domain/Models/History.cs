@@ -2,8 +2,8 @@
 {
     public class History<TEntity> : BaseEntity
     {
-        public DateTime CreatedDate { get; set; }
         public string Action { get; set; }
+        public DateTime CreatedDate { get; set; }
 
         // Foreign key for the User
         public Guid UserId { get; set; }

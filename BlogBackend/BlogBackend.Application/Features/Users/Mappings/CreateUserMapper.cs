@@ -16,7 +16,7 @@ namespace BlogBackend.Application.Features.Users.Mappings
                 Email = dto.Email,
                 Password = dto.Password,
                 Role = RoleType.User,
-                CreatedAt = DateTime.UtcNow,
+                CreatedDate = DateTime.UtcNow,
             };
         }
     }

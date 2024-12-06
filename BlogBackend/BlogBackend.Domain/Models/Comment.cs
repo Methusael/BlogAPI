@@ -3,7 +3,7 @@
     public class Comment : BaseEntity
     {
         public string Text { get; set; }
-        public DateTime CreateDate { get; set; }
+        public DateTime CreatedDate { get; set; }
 
         // Foreign key for the User
         public Guid AuthorId { get; set; }
