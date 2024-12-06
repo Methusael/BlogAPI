@@ -10,11 +10,16 @@ namespace BlogBackend.WebApi.Controllers
     public class TopicController : ControllerBase
     {
         private readonly IReadService<Topic,TopicDto> _topicReadService;
+        private readonly IWriteService<Topic, CreateTopicDto, UpdateTopicDto> _topicWriteService;
         private readonly ILogger<TopicController> _logger;
 
-        public TopicController(IReadService<Topic, TopicDto> topicReadService, ILogger<TopicController> logger)
+        public TopicController(
+            IReadService<Topic, TopicDto> topicReadService,
+            IWriteService<Topic, CreateTopicDto, UpdateTopicDto> topicWriteService,
+            ILogger<TopicController> logger)
         {
             _topicReadService = topicReadService;
+            _topicWriteService = topicWriteService;
             _logger = logger;
         }
 
@@ -29,7 +34,7 @@ namespace BlogBackend.WebApi.Controllers
             }
             catch (OperationCanceledException)
             {
-                return StatusCode(499, "Request canceled");
+                return StatusCode(499, "Request cancelled");
             }
             catch (Exception ex)
             {
@@ -48,7 +53,7 @@ namespace BlogBackend.WebApi.Controllers
             }
             catch (OperationCanceledException)
             {
-                return StatusCode(499, "Request canceled");
+                return StatusCode(499, "Request cancelled");
             }
             catch (Exception ex)
             {
@@ -57,63 +62,63 @@ namespace BlogBackend.WebApi.Controllers
         }
 
         //[Authorize(Roles = "Admin")]
-        //[HttpPost("Create")]
-        //public async Task<IActionResult> CreateAsync([FromBody] CreateTopicDto topicDto, CancellationToken cancellationToken)
-        //{
-        //    try
-        //    {
-        //        cancellationToken.ThrowIfCancellationRequested();
-        //        var guid = await _topicReadService.AddAsync(topicDto, cancellationToken);
-        //        return Ok(guid);
-        //    }
-        //    catch (OperationCanceledException)
-        //    {
-        //        return StatusCode(499, "Request canceled");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message);
-        //    }
-        //}
+        [HttpPost("Create")]
+        public async Task<IActionResult> CreateAsync([FromBody] CreateTopicDto topicDto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var guid = await _topicWriteService.CreateAsync(topicDto);
+                return Ok(guid);
+            }
+            catch (OperationCanceledException)
+            {
+                return StatusCode(499, "Request cancelled");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         //[Authorize(Roles = "Admin")]
-        //[HttpPut("Edit")]
-        //public async Task<IActionResult> Edit([FromBody] UpdateTopicDto updateTopicDto, CancellationToken cancellationToken)
-        //{
-        //    try
-        //    {
-        //        cancellationToken.ThrowIfCancellationRequested();
-        //        await _topicReadService.UpdateAsync(updateTopicDto);
-        //        return Ok();
-        //    }
-        //    catch (OperationCanceledException)
-        //    {
-        //        return StatusCode(499, "Request canceled");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message);
-        //    }
-        //}
+        [HttpPut("Edit/{id}")]
+        public async Task<IActionResult> Edit(Guid id, [FromBody] UpdateTopicDto updateTopicDto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await _topicWriteService.UpdateAsync(id, updateTopicDto);
+                return Ok();
+            }
+            catch (OperationCanceledException)
+            {
+                return StatusCode(499, "Request cancelled");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         //[Authorize(Roles = "Admin")]
-        //[HttpDelete("Delete")]
-        //public async Task<IActionResult> Delete([FromBody] Guid id, CancellationToken cancellationToken)
-        //{
-        //    try
-        //    {
-        //        cancellationToken.ThrowIfCancellationRequested();
-        //        await _topicReadService.DeleteByIdAsync(id, cancellationToken);
-        //        return Ok();
-        //    }
-        //    catch (OperationCanceledException)
-        //    {
-        //        return StatusCode(499, "Request canceled");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message);
-        //    }
-        //}
+        [HttpDelete("Delete/{id}")]
+        public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await _topicWriteService.DeleteAsync(id);
+                return Ok();
+            }
+            catch (OperationCanceledException)
+            {
+                return StatusCode(499, "Request cancelled");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
