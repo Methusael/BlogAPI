@@ -10,11 +10,16 @@ namespace BlogBackend.Hosting.Controllers
     public class PostController : ControllerBase
     {
         private readonly IReadService<Post, PostDto> _postReadService;
+        private readonly IWriteService<Topic, CreatePostDto, UpdatePostDto> _postWriteService;
         private readonly ILogger<PostController> _logger;
 
-        public PostController(IReadService<Post, PostDto> postService, ILogger<PostController> logger)
+        public PostController(
+            IReadService<Post, PostDto> postService,
+            IWriteService<Topic, CreatePostDto, UpdatePostDto> postWriteService,
+            ILogger<PostController> logger)
         {
             _postReadService = postService;
+            _postWriteService = postWriteService;
             _logger = logger;
         }
 
@@ -76,64 +81,64 @@ namespace BlogBackend.Hosting.Controllers
         }
 
         //[Authorize(Roles = "Admin")]
-        //[HttpPost("Create")]
-        //public async Task<IActionResult> CreateAsync([FromBody] PostDTO postDto, CancellationToken cancellationToken)
-        //{
-        //    try
-        //    {
-        //        cancellationToken.ThrowIfCancellationRequested();
-        //        var posts = await _postService.AddAsync(postDto, cancellationToken);
-        //        return Ok(posts);
-        //    }
-        //    catch (OperationCanceledException)
-        //    {
-        //        return StatusCode(499, "Request canceled");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message);
-        //    }
-        //}
+        [HttpPost("Create")]
+        public async Task<IActionResult> CreateAsync([FromBody] CreatePostDto createPostDto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await _postWriteService.CreateAsync(createPostDto);
+                return Ok();
+            }
+            catch (OperationCanceledException)
+            {
+                return StatusCode(499, "Request canceled");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         //[Authorize(Roles = "Admin")]
-        //[HttpPut("Edit")]
-        //public async Task<IActionResult> Edit([FromBody] PostDTO postDto, CancellationToken cancellationToken)
-        //{
-        //    try
-        //    {
-        //        cancellationToken.ThrowIfCancellationRequested();
-        //        await _postService.UpdateAsync(postDto, cancellationToken);
-        //        return Ok();
-        //    }
-        //    catch (OperationCanceledException)
-        //    {
-        //        return StatusCode(499, "Request canceled");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message);
-        //    }
-        //}
+        [HttpPut("Edit/{id}")]
+        public async Task<IActionResult> Edit(Guid id, [FromBody] UpdatePostDto updatePostDto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await _postWriteService.UpdateAsync(id, updatePostDto);
+                return Ok();
+            }
+            catch (OperationCanceledException)
+            {
+                return StatusCode(499, "Request canceled");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         //[Authorize(Roles = "Admin")]
-        //[HttpDelete("Delete/{id}")]
-        //public async Task<IActionResult> Delete([FromBody] Guid id, CancellationToken cancellationToken)
-        //{
-        //    try
-        //    {
-        //        cancellationToken.ThrowIfCancellationRequested();
-        //        await _postService.DeleteByIdAsync(id, cancellationToken);
-        //        return Ok();
-        //    }
-        //    catch (OperationCanceledException)
-        //    {
-        //        return StatusCode(499, "Request canceled");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message);
-        //    }
-        //}
+        [HttpDelete("Delete/{id}")]
+        public async Task<IActionResult> Delete([FromBody] Guid id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await _postWriteService.DeleteAsync(id);
+                return Ok();
+            }
+            catch (OperationCanceledException)
+            {
+                return StatusCode(499, "Request canceled");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         //[Authorize(Roles = "Admin,User")]
         //[HttpGet("Like")]

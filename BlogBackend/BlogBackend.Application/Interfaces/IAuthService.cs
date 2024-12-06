@@ -6,7 +6,5 @@ namespace BlogBackend.Application.Services
     public interface IAuthService
     {
         Task<string> LoginAsync(LoginRequest loginRequest, CancellationToken cancellationToken);
-
-        Task<UserDto> RegisterAsync(RegisterRequest registerRequest, CancellationToken cancellationToken);
     }
 }

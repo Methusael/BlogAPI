@@ -17,6 +17,8 @@ namespace BlogBackend.Application.Features.Users.Mappings
                 Password = dto.Password,
                 Role = RoleType.User,
                 CreatedDate = DateTime.UtcNow,
+                RefreshToken = string.Empty,
+                RefreshTokenExpiry = DateTime.UtcNow,
             };
         }
     }

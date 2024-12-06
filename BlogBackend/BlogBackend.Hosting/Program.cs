@@ -1,3 +1,4 @@
+using BlogBackend.Application.Services;
 using BlogBackend.Infrastructure.Data;
 using BlogBackend.WebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -67,9 +68,7 @@ namespace BlogBackend.WebApi
             Console.WriteLine("Adding services.");
             ReadServiceInjector.Register(builder.Services);
             WriteServiceInjector.Register(builder.Services);
-
-            //builder.Services.AddScoped<IUserService, UserService>();
-            //builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
 
             Console.WriteLine("Done.");
 

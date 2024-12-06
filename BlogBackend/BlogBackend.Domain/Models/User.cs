@@ -9,6 +9,8 @@ namespace BlogBackend.Domain.Models
         public string Password{ get; set; }
         public RoleType Role { get; set; }
         public DateTime CreatedDate { get; set; }        
+        public string RefreshToken { get; set; }
+        public DateTime RefreshTokenExpiry { get; set; }
 
         public ICollection<Topic> Topics { get; } = new List<Topic>();
         public ICollection<Post> Posts { get; } = new List<Post>();
@@ -19,8 +21,5 @@ namespace BlogBackend.Domain.Models
         public ICollection<History<Comment>> CommentHistories { get; } = new List<History<Comment>>();
 
 
-        //public string? RefreshToken { get; set; }
-
-        //public DateTime? RefreshTokenExpiry { get; set; }
     }
 }

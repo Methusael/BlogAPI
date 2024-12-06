@@ -1,218 +1,212 @@
-﻿//using BlogBackend.Application.DTOs;
-//using BlogBackend.Application.Features.Login.Requests;
-//using BlogBackend.Application.Features.Login.Responses;
-//using BlogBackend.Application.Services;
-//using BlogBackend.Domain.Exceptions;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.IdentityModel.Tokens;
-//using System.IdentityModel.Tokens.Jwt;
-//using System.Security.Claims;
-//using System.Security.Cryptography;
-//using System.Text;
+﻿using BlogBackend.Application.Features.Login.Requests;
+using BlogBackend.Application.Features.Login.Responses;
+using BlogBackend.Application.Features.Users.Dtos;
+using BlogBackend.Application.Interfaces;
+using BlogBackend.Application.Services;
+using BlogBackend.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq.Expressions;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
-//namespace BlogBackend.WebApi.Controllers
-//{
-//    [ApiController]
-//    [Route("[controller]")]
-//    public class AuthController : ControllerBase
-//    {
-//        private readonly IAuthService _authService;
-//        private readonly IUserService _userService;
-//        private readonly IConfiguration _configuration;
-//        private readonly ILogger<AuthController> _logger;
+namespace BlogBackend.WebApi.Controllers
+{
+    [ApiController]
+    [Route("[controller]")]
+    public class AuthController : ControllerBase
+    {
+        private readonly IAuthService _authService;
+        private readonly IReadService<User, UserDto> _userReadService;
+        private readonly IWriteService<User, CreateUserDto, UpdateUserDto> _userWriteService;
+        private readonly IConfiguration _configuration;
 
-//        public AuthController(IAuthService accountService,IUserService userService, IConfiguration configuration, ILogger<AuthController> logger)
-//        {
-//            _authService = accountService;
-//            _userService = userService;
-//            _configuration = configuration;
-//            _logger = logger;
-//        }
+        public AuthController(
+            IAuthService accountService,
+            IReadService<User, UserDto> userReadService,
+            IWriteService<User, CreateUserDto, UpdateUserDto> userWriteService,
+            IConfiguration configuration)
+        {
+            _authService = accountService;
+            _userReadService = userReadService;
+            _userWriteService = userWriteService;
+            _configuration = configuration;
+        }
 
-//        [HttpPost("Register")]
-//        [ProducesResponseType(StatusCodes.Status409Conflict)]
-//        [ProducesResponseType(StatusCodes.Status200OK)]
-//        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-//        public async Task<IActionResult> Register([FromBody] RegisterRequest model, CancellationToken cancellationToken)
-//        {
-//            _logger.LogInformation("Register called");
+        [HttpPost("Register")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Register([FromBody] CreateUserDto createUserDto, CancellationToken cancellationToken)
+        {
+            var filter = (Expression<Func<User, bool>>)(u => u.Email == createUserDto.Email);
+            var existingUser = (await _userReadService.GetAsync(filter)).FirstOrDefault();
+            if (existingUser != null)
+                return Conflict("User already exists.");
 
-//            try
-//            {
-//                var existingUser = await _userService.FindByEmailAsync(model.Email, cancellationToken);
-//                if (existingUser != null)
-//                    return Conflict("User already exists.");
-//            }
-//            catch (ItemNotFoundException)
-//            {
-//            }            
+            try
+            {
+                createUserDto.Password = BCrypt.Net.BCrypt.HashPassword(createUserDto.Password);
+                var result = await _userWriteService.CreateAsync(createUserDto);
+                return Ok("User successfully created");
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to create user");
+            }
+        }
 
-//            try
-//            {
-//                var result = await _authService.RegisterAsync(model, cancellationToken);
-//                _logger.LogInformation("Register succeeded");
-//                return Ok("User successfully created");
-//            }
-//            catch (Exception)
-//            {
-//                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to create user");
-//            }
-//        }
+        [HttpPost("Login")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginResponse))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest, CancellationToken cancellationToken)
+        {
+            try
+            {
+                string jwt = await _authService.LoginAsync(loginRequest, cancellationToken);
 
-//        [HttpPost("Login")]
-//        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginResponse))]
-//        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-//        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-//        public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest, CancellationToken cancellationToken)
-//        {
-//            try
-//            {
-//                string jwt = await _authService.LoginAsync(loginRequest, cancellationToken);
+                Response.Cookies.Append("jwt", jwt, new CookieOptions
+                {
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.None,
+                    Secure = true,
+                    IsEssential = true,
+                    Domain = "localhost"
+                });
+                return Ok(new
+                {
+                    token = jwt
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Invalid email or password");
+            }
+        }
 
-//                Response.Cookies.Append("jwt", jwt, new CookieOptions
-//                {
-//                    HttpOnly = true,
-//                    SameSite = SameSiteMode.None,
-//                    Secure = true,
-//                    IsEssential = true,
-//                    Domain = "localhost"
-//                });
-//                return Ok(new
-//                {
-//                    token = jwt
-//                });
-//            }
-//            catch (Exception ex)
-//            {
-//                return BadRequest("Invalid email or password");
-//            }
-//        }
+        [HttpPost("Refresh")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Refresh([FromBody] RefreshRequest refreshRequest)
+        {
+            var principal = GetPrincipalFromExpiredToken(refreshRequest.AccessToken);
 
-//        //[HttpPost("Refresh")]
-//        //[ProducesResponseType(StatusCodes.Status200OK)]
-//        //[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-//        //[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-//        //public async Task<IActionResult> Refresh([FromBody] RefreshRequest model)
-//        //{
-//        //    _logger.LogInformation("Refresh called");
+            if (principal?.Identity?.Name is null)
+                return Unauthorized();
 
-//        //    var principal = GetPrincipalFromExpiredToken(model.AccessToken);
+            var filter = (Expression<Func<User, bool>>)(u => u.Email == principal.Identity.Name && u.RefreshToken == refreshRequest.RefreshToken && u.RefreshTokenExpiry > DateTime.UtcNow);
+            var user = (await _userReadService.GetAsync(filter)).FirstOrDefault();
 
-//        //    if (principal?.Identity?.Name is null)
-//        //        return Unauthorized();
+            if (user is null)
+                return Unauthorized();
 
-//        //    var user = await _userService.FindByEmailAsync(principal.Identity.Name, CancellationToken.None);
+            var token = GenerateJwt(principal.Identity.Name);
 
-//        //    if (user is null || user.RefreshToken != model.RefreshToken || user.RefreshTokenExpiry < DateTime.UtcNow)
-//        //        return Unauthorized();
+            return Ok(new LoginResponse
+            {
+                JwtToken = new JwtSecurityTokenHandler().WriteToken(token),
+                Expiration = token.ValidTo,
+                RefreshToken = refreshRequest.RefreshToken
+            });
+        }
 
-//        //    var token = GenerateJwt(principal.Identity.Name);
+        //[Authorize]
+        //[HttpDelete("Revoke")]
+        //[ProducesResponseType(StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        //[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        //public async Task<IActionResult> Revoke()
+        //{
+        //    var email = HttpContext.User.Identity?.Name;
 
-//        //    _logger.LogInformation("Refresh succeeded");
+        //    if (email is null)
+        //        return Unauthorized();
 
-//        //    return Ok(new LoginResponse
-//        //    {
-//        //        JwtToken = new JwtSecurityTokenHandler().WriteToken(token),
-//        //        Expiration = token.ValidTo,
-//        //        RefreshToken = model.RefreshToken
-//        //    });
-//        //}
+        //    var filter = (Expression<Func<User, bool>>)(u => u.Email == email);
+        //    var user = (await _userReadService.GetAsync(filter)).FirstOrDefault();
 
-//        //[Authorize]
-//        //[HttpDelete("Revoke")]
-//        //[ProducesResponseType(StatusCodes.Status200OK)]
-//        //[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-//        //[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-//        //public async Task<IActionResult> Revoke()
-//        //{
-//        //    _logger.LogInformation("Revoke called");
+        //    if (user is null)
+        //        return Unauthorized();
 
-//        //    var email = HttpContext.User.Identity?.Name;
+        //    user.RefreshToken = null;
 
-//        //    if (email is null)
-//        //        return Unauthorized();
+        //    await _userWriteService.UpdateAsync(user.Id, user);
 
-//        //    var user = await _userService.FindByEmailAsync(email, CancellationToken.None);
+        //    return Ok();
+        //}
 
-//        //    if (user is null)
-//        //        return Unauthorized();
+        [HttpDelete("Logout")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Logout()
+        {
+            Response.Cookies.Delete("jwt", new CookieOptions
+            {
+                HttpOnly = true,
+                SameSite = SameSiteMode.None,
+                Secure = true,
+                IsEssential = true,
+                Domain = "localhost"
+            });
 
-//        //    user.RefreshToken = null;
+            return Ok(new
+            {
+                message = "Successfully logged out"
+            });
+        }
 
-//        //    _authService.Update(user);
+        private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
+        {
+            var secret = _configuration["JWT:Secret"] ?? throw new InvalidOperationException("Secret not configured");
 
-//        //    _logger.LogInformation("Revoke succeeded");
+            var validation = new TokenValidationParameters
+            {
+                ValidIssuer = _configuration["JWT:ValidIssuer"],
+                ValidAudience = _configuration["JWT:ValidAudience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
+                ValidateLifetime = false
+            };
 
-//        //    return Ok();
-//        //}
+            return new JwtSecurityTokenHandler().ValidateToken(token, validation, out _);
+        }
 
-//        [HttpDelete("Logout")]
-//        [ProducesResponseType(StatusCodes.Status200OK)]
-//        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-//        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-//        public async Task<IActionResult> Logout()
-//        {
-//            Response.Cookies.Delete("jwt", new CookieOptions
-//            {
-//                HttpOnly = true,
-//                SameSite = SameSiteMode.None,
-//                Secure = true,
-//                IsEssential = true,
-//                Domain = "localhost"
-//            });
+        private JwtSecurityToken GenerateJwt(string email)
+        {
+            var authClaims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Email, email),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
 
-//            return Ok(new
-//            {
-//                message = "successfully logged out"
-//            });
-//        }
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                _configuration["JWT:Secret"] ?? throw new InvalidOperationException("Secret not configured")));
 
-//        private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
-//        {
-//            var secret = _configuration["JWT:Secret"] ?? throw new InvalidOperationException("Secret not configured");
+            var token = new JwtSecurityToken(
+                issuer: _configuration["JWT:ValidIssuer"],
+                audience: _configuration["JWT:ValidAudience"],
+                expires: DateTime.UtcNow.AddSeconds(30),
+                claims: authClaims,
+                signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
+                );
 
-//            var validation = new TokenValidationParameters
-//            {
-//                ValidIssuer = _configuration["JWT:ValidIssuer"],
-//                ValidAudience = _configuration["JWT:ValidAudience"],
-//                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
-//                ValidateLifetime = false
-//            };
+            return token;
+        }
 
-//            return new JwtSecurityTokenHandler().ValidateToken(token, validation, out _);
-//        }
+        private static string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[64];
 
-//        private JwtSecurityToken GenerateJwt(string email)
-//        {
-//            var authClaims = new List<Claim>
-//            {
-//                new Claim(ClaimTypes.Email, email),
-//                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-//            };
+            using var generator = RandomNumberGenerator.Create();
 
-//            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-//                _configuration["JWT:Secret"] ?? throw new InvalidOperationException("Secret not configured")));
+            generator.GetBytes(randomNumber);
 
-//            var token = new JwtSecurityToken(
-//                issuer: _configuration["JWT:ValidIssuer"],
-//                audience: _configuration["JWT:ValidAudience"],
-//                expires: DateTime.UtcNow.AddSeconds(30),
-//                claims: authClaims,
-//                signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
-//                );
-
-//            return token;
-//        }
-
-//        private static string GenerateRefreshToken()
-//        {
-//            var randomNumber = new byte[64];
-
-//            using var generator = RandomNumberGenerator.Create();
-
-//            generator.GetBytes(randomNumber);
-
-//            return Convert.ToBase64String(randomNumber);
-//        }
-//    }
-//}
+            return Convert.ToBase64String(randomNumber);
+        }
+    }
+}

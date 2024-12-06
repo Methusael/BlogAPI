@@ -1,6 +1,7 @@
 ﻿using BlogBackend.Application.Interfaces;
 using BlogBackend.Domain.Interfaces;
 using BlogBackend.Domain.Models;
+using System.Linq.Expressions;
 
 namespace BlogBackend.Application.Services
 {
@@ -21,6 +22,13 @@ namespace BlogBackend.Application.Services
         {
             IEnumerable<TEntity> result = await _repository.GetAsync();
             return result.Select(e => _readMapper.ToDto(e));
+        }
+
+        public async Task<IEnumerable<TDto>> GetAsync(Expression<Func<TEntity, bool>> filter = null, Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null, string includeProperties = "")
+        {
+            IEnumerable<TEntity> res = await _repository.GetAsync(filter, orderBy, includeProperties);
+            IReadOnlyList<TDto> mappedResult = res.Select(entity => _readMapper.ToDto(entity)).ToList();
+            return mappedResult;
         }
 
         public async Task<TDto> GetByIdAsync(Guid id)
