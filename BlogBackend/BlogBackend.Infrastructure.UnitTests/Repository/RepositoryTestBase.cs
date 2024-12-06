@@ -1,16 +1,18 @@
 ﻿using BlogBackend.Domain.Models;
 using BlogBackend.Infrastructure.Data;
 using BlogBackend.Infrastructure.Repository;
+
 using Microsoft.EntityFrameworkCore;
+
 using NUnit.Framework;
 
 namespace BlogBackend.UnitTests.Services
 {
     [TestFixture]
-    public class RepositoryTestBase<T> where T : BaseEntity
+    public class RepositoryTestBase<TEntity> where TEntity : BaseEntity
     {
         protected ApplicationDbContext _dbContext = default!;
-        protected Repository<T> _repository = default!;
+        protected GenericRepository<TEntity> _repository = default!;
 
         private readonly DbContextOptions<ApplicationDbContext> _dbContextOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase("InMemoryDB").Options;

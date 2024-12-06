@@ -1,5 +1,5 @@
-﻿using BlogBackend.Application.DTOs;
-using BlogBackend.Application.DTOs.Requests;
+﻿using BlogBackend.Application.Features.Login.Requests;
+using BlogBackend.Application.Features.Users.Dtos;
 
 namespace BlogBackend.Application.Services
 {
@@ -7,6 +7,6 @@ namespace BlogBackend.Application.Services
     {
         Task<string> LoginAsync(LoginRequest loginRequest, CancellationToken cancellationToken);
 
-        Task<UserDTO> RegisterAsync(RegisterRequest registerRequest, CancellationToken cancellationToken);
+        Task<UserDto> RegisterAsync(RegisterRequest registerRequest, CancellationToken cancellationToken);
     }
 }

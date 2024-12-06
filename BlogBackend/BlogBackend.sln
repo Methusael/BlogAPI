@@ -15,17 +15,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F7E340EA-9DD
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{CBEEA9AB-F1C0-4414-A1F5-A8B999C7B067}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogBackend.Application.UnitTests", "BlogBackend.Application.UnitTests\BlogBackend.Application.UnitTests.csproj", "{78398838-F308-4446-A193-9DFEA5DC17C6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlogBackend.Application.UnitTests", "BlogBackend.Application.UnitTests\BlogBackend.Application.UnitTests.csproj", "{78398838-F308-4446-A193-9DFEA5DC17C6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogBackend.Application.IntegrationTests", "BlogBackend.Application.IntegrationTests\BlogBackend.Application.IntegrationTests.csproj", "{64CD91E4-5061-4387-801D-C175419B956D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlogBackend.Application.IntegrationTests", "BlogBackend.Application.IntegrationTests\BlogBackend.Application.IntegrationTests.csproj", "{64CD91E4-5061-4387-801D-C175419B956D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogBackend.Infrastructure.UnitTests", "BlogBackend.Infrastructure.UnitTests\BlogBackend.Infrastructure.UnitTests.csproj", "{3CBDD3E3-8873-4924-8C8F-AAD3ABA2DEA1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlogBackend.Infrastructure.UnitTests", "BlogBackend.Infrastructure.UnitTests\BlogBackend.Infrastructure.UnitTests.csproj", "{3CBDD3E3-8873-4924-8C8F-AAD3ABA2DEA1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogBackend.Infrastructure.IntegrationTests", "BlogBackend.Infrastructure.IntegrationTests\BlogBackend.Infrastructure.IntegrationTests.csproj", "{32AA8296-E230-4AE3-95C6-3CC980F24DCC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlogBackend.Infrastructure.IntegrationTests", "BlogBackend.Infrastructure.IntegrationTests\BlogBackend.Infrastructure.IntegrationTests.csproj", "{32AA8296-E230-4AE3-95C6-3CC980F24DCC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogBackend.WebApi.UnitTests", "BlogBackend.WebApi.UnitTests\BlogBackend.WebApi.UnitTests.csproj", "{96D65F94-BCA6-4611-8439-D922AC285D27}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlogBackend.WebApi.UnitTests", "BlogBackend.WebApi.UnitTests\BlogBackend.WebApi.UnitTests.csproj", "{96D65F94-BCA6-4611-8439-D922AC285D27}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogBackend.WebApi.IntegrationTests", "BlogBackend.WebApi.IntegrationTests\BlogBackend.WebApi.IntegrationTests.csproj", "{EFEF6228-F79F-4827-B809-20CE5B328A0C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlogBackend.WebApi.IntegrationTests", "BlogBackend.WebApi.IntegrationTests\BlogBackend.WebApi.IntegrationTests.csproj", "{EFEF6228-F79F-4827-B809-20CE5B328A0C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

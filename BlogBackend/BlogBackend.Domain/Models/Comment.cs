@@ -1,26 +1,18 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace BlogBackend.Domain.Models
+﻿namespace BlogBackend.Domain.Models
 {
     public class Comment : BaseEntity
     {
-        [ForeignKey(nameof(UserId))]
-        public Guid UserId { get; set; }
-
-        /// <summary>
-        /// Navigation property
-        /// </summary>
-        public User User { get; set; }
-
         public string Text { get; set; }
+        public DateTime CreateDate { get; set; }
 
-        [ForeignKey(nameof(PostId))]
+        // Foreign key for the User
+        public Guid AuthorId { get; set; }
+        public User Author { get; set; }
+
+        // Foreign key for the Post
         public Guid PostId { get; set; }
+        public Post Post { get; set; }
 
-        /// <summary>
-        /// Navigation property
-        /// </summary>
-        public Topic Post { get; set; }
+        public ICollection<History<Comment>> CommentHistories { get; } = new List<History<Comment>>();
     }
 }
