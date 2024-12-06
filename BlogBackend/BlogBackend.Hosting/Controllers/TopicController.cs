@@ -1,6 +1,7 @@
 ﻿using BlogBackend.Application.Features.Topics.Dtos;
 using BlogBackend.Application.Interfaces;
 using BlogBackend.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BlogBackend.WebApi.Controllers
@@ -61,7 +62,7 @@ namespace BlogBackend.WebApi.Controllers
             }
         }
 
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpPost("Create")]
         public async Task<IActionResult> CreateAsync([FromBody] CreateTopicDto topicDto, CancellationToken cancellationToken)
         {
@@ -81,7 +82,7 @@ namespace BlogBackend.WebApi.Controllers
             }
         }
 
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpPut("Edit/{id}")]
         public async Task<IActionResult> Edit(Guid id, [FromBody] UpdateTopicDto updateTopicDto, CancellationToken cancellationToken)
         {
@@ -101,7 +102,7 @@ namespace BlogBackend.WebApi.Controllers
             }
         }
 
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
         {

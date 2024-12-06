@@ -1,6 +1,7 @@
 ﻿using BlogBackend.Application.Features.Posts.Dtos;
 using BlogBackend.Application.Interfaces;
 using BlogBackend.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BlogBackend.Hosting.Controllers
@@ -10,12 +11,12 @@ namespace BlogBackend.Hosting.Controllers
     public class PostController : ControllerBase
     {
         private readonly IReadService<Post, PostDto> _postReadService;
-        private readonly IWriteService<Topic, CreatePostDto, UpdatePostDto> _postWriteService;
+        private readonly IWriteService<Post, CreatePostDto, UpdatePostDto> _postWriteService;
         private readonly ILogger<PostController> _logger;
 
         public PostController(
             IReadService<Post, PostDto> postService,
-            IWriteService<Topic, CreatePostDto, UpdatePostDto> postWriteService,
+            IWriteService<Post, CreatePostDto, UpdatePostDto> postWriteService,
             ILogger<PostController> logger)
         {
             _postReadService = postService;
@@ -80,7 +81,7 @@ namespace BlogBackend.Hosting.Controllers
             }
         }
 
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpPost("Create")]
         public async Task<IActionResult> CreateAsync([FromBody] CreatePostDto createPostDto, CancellationToken cancellationToken)
         {
@@ -100,7 +101,7 @@ namespace BlogBackend.Hosting.Controllers
             }
         }
 
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpPut("Edit/{id}")]
         public async Task<IActionResult> Edit(Guid id, [FromBody] UpdatePostDto updatePostDto, CancellationToken cancellationToken)
         {
@@ -120,7 +121,7 @@ namespace BlogBackend.Hosting.Controllers
             }
         }
 
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete([FromBody] Guid id, CancellationToken cancellationToken)
         {
